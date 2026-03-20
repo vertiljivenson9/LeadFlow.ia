@@ -1,0 +1,54 @@
+# LeadFlow AI - Cloudflare Pages Configuration
+# ================================================
+# Un solo despliegue: Frontend + Backend
+
+name = "leadflow-ai"
+compatibility_date = "2024-03-20"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "dist"
+
+# ================================================
+# D1 DATABASE - Crear desde dashboard
+# ================================================
+# 1. Ve a Workers & Pages > D1 > Create database
+# 2. Nombre: leadflow-db
+# 3. Copia el database_id aquí:
+
+[[d1_databases]]
+binding = "DB"
+database_name = "leadflow-db"
+database_id = "TU_DATABASE_ID_AQUI"
+
+# ================================================
+# KV NAMESPACE - Crear desde dashboard
+# ================================================
+# 1. Ve a Workers & Pages > KV > Create namespace
+# 2. Nombre: leadflow-kv
+# 3. Copia el id aquí:
+
+[[kv_namespaces]]
+binding = "KV"
+id = "TU_KV_ID_AQUI"
+
+# ================================================
+# R2 BUCKET - Crear desde dashboard
+# ================================================
+# 1. Ve a R2 > Create bucket
+# 2. Nombre: leadflow-exports
+
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "leadflow-exports"
+
+# ================================================
+# CRON TRIGGERS - Procesamiento gratuito
+# ================================================
+[triggers]
+crons = ["*/5 * * * *"]
+
+# ================================================
+# VARIABLES (configurar en Dashboard > Settings > Environment Variables)
+# ================================================
+# JWT_SECRET = (genera un string aleatorio largo)
+# JWT_REFRESH_SECRET = (otro string aleatorio diferente)
+# RESEND_API_KEY = (tu API key de resend.com)
