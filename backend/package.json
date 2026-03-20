@@ -1,0 +1,43 @@
+{
+  "name": "leadflow-ai-backend",
+  "version": "1.0.0",
+  "description": "LeadFlow AI Backend - Cloudflare Workers + Hono.js",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev --local",
+    "build": "wrangler build",
+    "deploy": "wrangler deploy",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:prod": "wrangler deploy --env production",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:create": "wrangler d1 create leadflow-db",
+    "db:create:prod": "wrangler d1 create leadflow-db-prod",
+    "db:migration": "wrangler d1 migrations create leadflow-db",
+    "db:migrate": "wrangler d1 migrations apply leadflow-db --local",
+    "db:migrate:prod": "wrangler d1 migrations apply leadflow-db --remote",
+    "db:studio": "wrangler d1 execute leadflow-db --local --command=\"SELECT * FROM users LIMIT 10\"",
+    "kv:create": "wrangler kv:namespace create KV",
+    "kv:create:prod": "wrangler kv:namespace create KV --preview false",
+    "queue:create": "wrangler queues create leadflow-queue",
+    "queue:create:prod": "wrangler queues create leadflow-queue-prod",
+    "r2:create": "wrangler r2 bucket create leadflow-exports",
+    "r2:create:prod": "wrangler r2 bucket create leadflow-exports-prod",
+    "tail": "wrangler tail",
+    "secret:jwt": "wrangler secret put JWT_SECRET",
+    "secret:jwt-refresh": "wrangler secret put JWT_REFRESH_SECRET",
+    "secret:resend": "wrangler secret put RESEND_API_KEY"
+  },
+  "dependencies": {
+    "hono": "^4.3.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240405.0",
+    "@types/bun": "latest",
+    "typescript": "^5.4.0",
+    "vitest": "^1.5.0",
+    "wrangler": "^3.50.0"
+  }
+}

@@ -1,0 +1,42 @@
+# LeadFlow AI - Local Development Configuration
+# Use this for local development WITHOUT queues (free tier compatible)
+# Run with: wrangler dev --config wrangler.local.toml
+
+name = "leadflow-ai-api-local"
+main = "src/index.ts"
+compatibility_date = "2024-03-20"
+compatibility_flags = ["nodejs_compat"]
+
+[dev]
+port = 8787
+local_protocol = "http"
+
+# D1 Database (local)
+[[d1_databases]]
+binding = "DB"
+database_name = "leadflow-db-local"
+database_id = "local-db"
+migrations_dir = "../migrations"
+
+# KV Namespace (local)
+[[kv_namespaces]]
+binding = "KV"
+id = "local-kv"
+
+# R2 Bucket (local)  
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "leadflow-exports-local"
+
+# Note: Queues are disabled for local development
+# Follow-up emails will be logged to console instead
+
+[vars]
+RATE_LIMIT_REQUESTS = "100"
+RATE_LIMIT_WINDOW = "60"
+ENVIRONMENT = "local"
+JWT_SECRET = "local-dev-secret-do-not-use-in-production"
+JWT_REFRESH_SECRET = "local-dev-refresh-secret-do-not-use-in-production"
+RESEND_API_KEY = "re-local-dummy-key"
+
+# No queues in local mode - email jobs will be skipped

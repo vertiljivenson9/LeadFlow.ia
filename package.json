@@ -1,0 +1,30 @@
+{
+  "name": "leadflow-ai",
+  "version": "1.0.0",
+  "description": "LeadFlow AI - A lightweight, mobile-first CRM for small businesses",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"bun run dev:backend\" \"bun run dev:frontend\"",
+    "dev:backend": "cd backend && bun run dev",
+    "dev:frontend": "cd frontend && bun run dev",
+    "build": "bun run build:frontend && bun run build:backend",
+    "build:backend": "cd backend && bun run build",
+    "build:frontend": "cd frontend && bun run build",
+    "test": "bun run test:backend && bun run test:frontend",
+    "test:backend": "cd backend && bun test",
+    "test:frontend": "cd frontend && bun test",
+    "deploy": "cd backend && bun run deploy",
+    "db:migrate": "cd backend && wrangler d1 migrations apply leadflow-db --local",
+    "db:migrate:prod": "cd backend && wrangler d1 migrations apply leadflow-db --remote",
+    "lint": "eslint backend/src frontend/src",
+    "typecheck": "tsc --noEmit -p backend/tsconfig.json && tsc --noEmit -p frontend/tsconfig.json"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "typescript": "^5.4.0"
+  }
+}

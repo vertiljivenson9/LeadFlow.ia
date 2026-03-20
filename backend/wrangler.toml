@@ -1,0 +1,116 @@
+# LeadFlow AI - Cloudflare Workers Configuration
+# ================================================
+# Optimizado para el plan GRATUITO de Cloudflare
+# Sin Queues (usamos Cron Triggers gratuitos)
+
+name = "leadflow-ai-api"
+main = "src/index.ts"
+compatibility_date = "2024-03-20"
+compatibility_flags = ["nodejs_compat"]
+
+# ================================================
+# CONFIGURACIÓN DE DESARROLLO LOCAL
+# ================================================
+[dev]
+port = 8787
+local_protocol = "http"
+
+# ================================================
+# D1 DATABASE - Base de datos SQLite
+# ================================================
+# Crear: wrangler d1 create leadflow-db
+[[d1_databases]]
+binding = "DB"
+database_name = "leadflow-db"
+database_id = "TU_DATABASE_ID_AQUI"  # <-- Reemplaza con tu ID
+migrations_dir = "../migrations"
+
+# ================================================
+# KV NAMESPACE - Caché y tokens
+# ================================================
+# Crear: wrangler kv:namespace create KV
+[[kv_namespaces]]
+binding = "KV"
+id = "TU_KV_ID_AQUI"  # <-- Reemplaza con tu ID
+
+# ================================================
+# R2 BUCKET - Almacenamiento de exports
+# ================================================
+# Crear: wrangler r2 bucket create leadflow-exports
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "leadflow-exports"
+
+# ================================================
+# CRON TRIGGERS - Procesamiento de jobs (GRATIS!)
+# ================================================
+# Ejecuta cada 5 minutos para procesar emails pendientes
+# NO requiere plan pago como las Queues
+[triggers]
+crons = ["*/5 * * * *"]  # Cada 5 minutos
+
+# ================================================
+# VARIABLES DE ENTORNO (NO secretos)
+# ================================================
+[vars]
+RATE_LIMIT_REQUESTS = "100"
+RATE_LIMIT_WINDOW = "60"
+ENVIRONMENT = "development"
+
+# ================================================
+# SECRETS (Configurar con: wrangler secret put NOMBRE)
+# ================================================
+# Los siguientes secrets DEBEN configurarse:
+# - JWT_SECRET: Secreto para firmar access tokens
+# - JWT_REFRESH_SECRET: Secreto para refresh tokens
+# - RESEND_API_KEY: API key de Resend para emails
+#
+# Ejemplo:
+#   wrangler secret put JWT_SECRET
+#   (ingresa el valor cuando se solicite)
+
+# ================================================
+# ENTORNO DE PRODUCCIÓN
+# ================================================
+[env.production]
+name = "leadflow-ai-api-prod"
+vars = { ENVIRONMENT = "production", RATE_LIMIT_REQUESTS = "200", RATE_LIMIT_WINDOW = "60" }
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "leadflow-db-prod"
+database_id = "TU_PROD_DATABASE_ID"
+
+[[env.production.kv_namespaces]]
+binding = "KV"
+id = "TU_PROD_KV_ID"
+
+[[env.production.r2_buckets]]
+binding = "R2"
+bucket_name = "leadflow-exports-prod"
+
+[env.production.triggers]
+crons = ["*/5 * * * *"]
+
+# ================================================
+# ENTORNO DE STAGING
+# ================================================
+[env.staging]
+name = "leadflow-ai-api-staging"
+vars = { ENVIRONMENT = "staging", RATE_LIMIT_REQUESTS = "100", RATE_LIMIT_WINDOW = "60" }
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "leadflow-db-staging"
+database_id = "TU_STAGING_DATABASE_ID"
+
+[[env.staging.kv_namespaces]]
+binding = "KV"
+id = "TU_STAGING_KV_ID"
+
+[[env.staging.r2_buckets]]
+binding = "R2"
+bucket_name = "leadflow-exports-staging"
+
+[env.staging.triggers]
+crons = ["*/5 * * * *"]
