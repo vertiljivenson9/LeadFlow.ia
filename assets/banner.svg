@@ -1,0 +1,118 @@
+<svg width="800" height="200" viewBox="0 0 800 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0F172A;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#1E1B4B;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0F172A;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8B5CF6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="flowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#6366F1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8B5CF6;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <clipPath id="roundedClip">
+      <rect x="0" y="0" width="800" height="200" rx="16"/>
+    </clipPath>
+  </defs>
+  
+  <!-- Background -->
+  <g clip-path="url(#roundedClip)">
+    <rect width="800" height="200" fill="url(#bgGradient)"/>
+    
+    <!-- Decorative grid -->
+    <g opacity="0.03">
+      <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" stroke-width="1"/>
+      </pattern>
+      <rect width="800" height="200" fill="url(#grid)"/>
+    </g>
+    
+    <!-- Glow orbs -->
+    <circle cx="100" cy="100" r="100" fill="#3B82F6" opacity="0.1" filter="url(#softGlow)"/>
+    <circle cx="700" cy="80" r="80" fill="#8B5CF6" opacity="0.1" filter="url(#softGlow)"/>
+    
+    <!-- Flow lines decoration -->
+    <path d="M0 150 Q100 100, 200 130 T400 100 T600 140 T800 90" stroke="url(#flowGradient)" stroke-width="1" fill="none" opacity="0.2"/>
+    <path d="M0 180 Q150 130, 300 160 T500 130 T700 170 T800 120" stroke="url(#flowGradient)" stroke-width="0.5" fill="none" opacity="0.1"/>
+  </g>
+  
+  <!-- Main Logo Icon -->
+  <g transform="translate(50, 60)">
+    <!-- Pipeline flow -->
+    <path d="M15 40 Q30 15, 55 30 T95 25" stroke="url(#flowGradient)" stroke-width="5" fill="none" stroke-linecap="round" filter="url(#glow)"/>
+    <path d="M15 55 Q40 35, 65 50 T95 45" stroke="url(#flowGradient)" stroke-width="3.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+    <path d="M25 70 Q50 55, 75 65 T95 65" stroke="url(#flowGradient)" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.4"/>
+    
+    <!-- Lead nodes -->
+    <circle cx="15" cy="50" r="10" fill="url(#logoGradient)" opacity="0.9"/>
+    <circle cx="55" cy="35" r="8" fill="url(#logoGradient)" opacity="0.8"/>
+    <circle cx="95" cy="45" r="12" fill="url(#logoGradient)"/>
+    
+    <!-- AI Sparkle -->
+    <g transform="translate(87, 12)">
+      <path d="M8 0 L9 6 L16 8 L9 10 L8 16 L7 10 L0 8 L7 6 Z" fill="#FBBF24" filter="url(#glow)"/>
+    </g>
+  </g>
+  
+  <!-- Text -->
+  <text x="175" y="95" font-family="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="52" font-weight="800" fill="white">
+    Lead<tspan fill="url(#logoGradient)">Flow</tspan>
+  </text>
+  
+  <!-- AI Badge -->
+  <g transform="translate(410, 52)">
+    <rect x="0" y="0" width="48" height="32" rx="6" fill="url(#logoGradient)"/>
+    <text x="24" y="23" font-family="'Inter', sans-serif" font-size="18" font-weight="700" fill="white" text-anchor="middle">AI</text>
+  </g>
+  
+  <!-- Tagline -->
+  <text x="175" y="135" font-family="'Inter', sans-serif" font-size="16" font-weight="500" fill="#94A3B8" letter-spacing="2">
+    INTELLIGENT LEAD MANAGEMENT FOR MODERN TEAMS
+  </text>
+  
+  <!-- Feature badges -->
+  <g transform="translate(175, 155)">
+    <rect x="0" y="0" width="80" height="24" rx="12" fill="#3B82F6" opacity="0.2"/>
+    <text x="40" y="16" font-family="'Inter', sans-serif" font-size="11" font-weight="600" fill="#60A5FA" text-anchor="middle">Mobile-First</text>
+  </g>
+  <g transform="translate(265, 155)">
+    <rect x="0" y="0" width="90" height="24" rx="12" fill="#8B5CF6" opacity="0.2"/>
+    <text x="45" y="16" font-family="'Inter', sans-serif" font-size="11" font-weight="600" fill="#A78BFA" text-anchor="middle">Cloudflare Edge</text>
+  </g>
+  <g transform="translate(365, 155)">
+    <rect x="0" y="0" width="70" height="24" rx="12" fill="#10B981" opacity="0.2"/>
+    <text x="35" y="16" font-family="'Inter', sans-serif" font-size="11" font-weight="600" fill="#34D399" text-anchor="middle">Free Tier</text>
+  </g>
+  
+  <!-- Right side decorative code -->
+  <g transform="translate(550, 30)" opacity="0.15">
+    <text font-family="'JetBrains Mono', monospace" font-size="10" fill="#60A5FA">
+      <tspan x="0" y="0">// Lead pipeline</tspan>
+      <tspan x="0" y="14">leads.flow({</tspan>
+      <tspan x="0" y="28">  stage: 'qualified',</tspan>
+      <tspan x="0" y="42">  autoFollowUp: true</tspan>
+      <tspan x="0" y="56">});</tspan>
+    </text>
+  </g>
+  
+  <!-- Border -->
+  <rect x="0" y="0" width="800" height="200" rx="16" fill="none" stroke="url(#flowGradient)" stroke-width="1" opacity="0.3"/>
+</svg>
