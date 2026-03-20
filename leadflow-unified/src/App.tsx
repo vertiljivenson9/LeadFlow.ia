@@ -28,6 +28,7 @@ interface Lead {
 interface AuthContextType {
   user: User | null;
   token: string | null;
+  loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => void;
@@ -74,16 +75,23 @@ function useAuth() {
 
 function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'));
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (token) {
-      apiFetch('/auth/me').then(data => setUser(data.user)).catch(() => {
-        localStorage.removeItem('token');
-        setToken(null);
-      });
+    const savedToken = localStorage.getItem('token');
+    if (savedToken) {
+      apiFetch('/auth/me')
+        .then(data => setUser(data.user))
+        .catch(() => {
+          localStorage.removeItem('token');
+          setToken(null);
+        })
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
     }
-  }, [token]);
+  }, []);
 
   const login = async (email: string, password: string) => {
     const data = await apiFetch('/auth/login', {
@@ -112,10 +120,22 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
+}
+
+// ================================================
+// NAVIGATION CONTEXT
+// ================================================
+const NavContext = createContext<{
+  page: string;
+  navigate: (path: string) => void;
+}>({ page: '/', navigate: () => {} });
+
+function useNav() {
+  return useContext(NavContext);
 }
 
 // ================================================
@@ -125,6 +145,7 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
 // Login Page
 function LoginPage() {
   const { login } = useAuth();
+  const { navigate } = useNav();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -136,6 +157,7 @@ function LoginPage() {
     setError('');
     try {
       await login(email, password);
+      navigate('/');
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -145,7 +167,7 @@ function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 p-4">
-      <div className="card w-full max-w-md">
+      <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
             LeadFlow AI
@@ -154,34 +176,37 @@ function LoginPage() {
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="input"
-              required
-            />
-          </div>
-          <div>
-            <input
-              type="password"
-              placeholder="Contraseña"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="input"
-              required
-            />
-          </div>
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+            required
+          />
+          <input
+            type="password"
+            placeholder="Contraseña"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
+            required
+          />
           {error && <p className="text-red-500 text-sm">{error}</p>}
-          <button type="submit" className="btn btn-primary w-full" disabled={loading}>
+          <button 
+            type="submit" 
+            className="w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium disabled:opacity-50"
+            disabled={loading}
+          >
             {loading ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
         
         <p className="text-center mt-6 text-gray-500">
-          ¿No tienes cuenta? <a href="/register" className="text-blue-500 hover:underline">Regístrate</a>
+          ¿No tienes cuenta?{' '}
+          <button onClick={() => navigate('/register')} className="text-blue-500 hover:underline">
+            Regístrate
+          </button>
         </p>
       </div>
     </div>
@@ -191,6 +216,7 @@ function LoginPage() {
 // Register Page
 function RegisterPage() {
   const { register } = useAuth();
+  const { navigate } = useNav();
   const [form, setForm] = useState({ email: '', password: '', name: '', organizationName: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -201,6 +227,7 @@ function RegisterPage() {
     setError('');
     try {
       await register(form);
+      navigate('/');
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -210,7 +237,7 @@ function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 p-4">
-      <div className="card w-full max-w-md">
+      <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
             Crear Cuenta
@@ -224,7 +251,7 @@ function RegisterPage() {
             placeholder="Nombre completo"
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
-            className="input"
+            className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
             required
           />
           <input
@@ -232,7 +259,7 @@ function RegisterPage() {
             placeholder="Email"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
-            className="input"
+            className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
             required
           />
           <input
@@ -240,7 +267,7 @@ function RegisterPage() {
             placeholder="Contraseña (mín. 6 caracteres)"
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
-            className="input"
+            className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
             required
             minLength={6}
           />
@@ -249,16 +276,23 @@ function RegisterPage() {
             placeholder="Nombre de organización (opcional)"
             value={form.organizationName}
             onChange={(e) => setForm({ ...form, organizationName: e.target.value })}
-            className="input"
+            className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
           />
           {error && <p className="text-red-500 text-sm">{error}</p>}
-          <button type="submit" className="btn btn-primary w-full" disabled={loading}>
+          <button 
+            type="submit" 
+            className="w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium disabled:opacity-50"
+            disabled={loading}
+          >
             {loading ? 'Creando...' : 'Crear Cuenta'}
           </button>
         </form>
         
         <p className="text-center mt-6 text-gray-500">
-          ¿Ya tienes cuenta? <a href="/login" className="text-blue-500 hover:underline">Inicia sesión</a>
+          ¿Ya tienes cuenta?{' '}
+          <button onClick={() => navigate('/login')} className="text-blue-500 hover:underline">
+            Inicia sesión
+          </button>
         </p>
       </div>
     </div>
@@ -279,19 +313,19 @@ function DashboardPage() {
       <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm p-4 border">
           <p className="text-gray-500 text-sm">Total Leads</p>
           <p className="text-3xl font-bold">{stats?.totalLeads || 0}</p>
         </div>
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm p-4 border">
           <p className="text-gray-500 text-sm">Ganados</p>
           <p className="text-3xl font-bold text-green-600">{stats?.wonLeads || 0}</p>
         </div>
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm p-4 border">
           <p className="text-gray-500 text-sm">Conversión</p>
           <p className="text-3xl font-bold text-blue-600">{stats?.conversionRate || 0}%</p>
         </div>
-        <div className="card">
+        <div className="bg-white rounded-xl shadow-sm p-4 border">
           <p className="text-gray-500 text-sm">Pipeline</p>
           <p className="text-3xl font-bold text-purple-600">${(stats?.pipelineValue || 0).toLocaleString()}</p>
         </div>
@@ -303,9 +337,9 @@ function DashboardPage() {
 // Leads Kanban Page
 function LeadsPage() {
   const queryClient = useQueryClient();
-  const { data: pipeline, isLoading } = useQuery({
-    queryKey: ['pipeline'],
-    queryFn: () => apiFetch('/pipeline'),
+  const { data: leadsData, isLoading } = useQuery({
+    queryKey: ['leads'],
+    queryFn: () => apiFetch('/leads'),
   });
   
   const [showModal, setShowModal] = useState(false);
@@ -314,7 +348,7 @@ function LeadsPage() {
   const createMutation = useMutation({
     mutationFn: (data: any) => apiFetch('/leads', { method: 'POST', body: JSON.stringify(data) }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pipeline'] });
+      queryClient.invalidateQueries({ queryKey: ['leads'] });
       setShowModal(false);
       setNewLead({ name: '', email: '', company: '', value: '', stage: 'new' });
     },
@@ -323,10 +357,12 @@ function LeadsPage() {
   const updateStageMutation = useMutation({
     mutationFn: ({ id, stage }: { id: string; stage: string }) =>
       apiFetch(`/leads/${id}/stage`, { method: 'PATCH', body: JSON.stringify({ stage }) }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['pipeline'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['leads'] }),
   });
 
   if (isLoading) return <div className="p-8 text-center">Cargando...</div>;
+
+  const leads = leadsData?.leads || [];
 
   const stages = [
     { id: 'new', name: 'Nuevo', color: 'bg-blue-100 border-blue-300' },
@@ -336,6 +372,9 @@ function LeadsPage() {
     { id: 'won', name: 'Ganado', color: 'bg-green-100 border-green-300' },
     { id: 'lost', name: 'Perdido', color: 'bg-red-100 border-red-300' },
   ];
+
+  const getLeadsByStage = (stageId: string) => 
+    leads.filter((l: Lead) => l.stage === stageId);
 
   const handleCreateLead = (e: React.FormEvent) => {
     e.preventDefault();
@@ -349,26 +388,42 @@ function LeadsPage() {
     <div className="p-4 md:p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Pipeline</h1>
-        <button onClick={() => setShowModal(true)} className="btn btn-primary">
+        <button 
+          onClick={() => setShowModal(true)} 
+          className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium"
+        >
           + Nuevo Lead
         </button>
       </div>
       
       <div className="flex gap-4 overflow-x-auto pb-4">
         {stages.map((stage) => {
-          const stageData = pipeline?.pipeline?.find((s: any) => s.stage === stage.id) || { count: 0, leads: [] };
+          const stageLeads = getLeadsByStage(stage.id);
           
           return (
-            <div key={stage.id} className={`stage-column ${stage.color} border-2`}>
+            <div key={stage.id} className={`flex-1 min-w-[280px] max-w-[320px] rounded-xl p-3 ${stage.color} border-2`}>
               <div className="flex justify-between items-center mb-3">
                 <h3 className="font-semibold">{stage.name}</h3>
                 <span className="bg-white px-2 py-1 rounded-full text-sm font-medium">
-                  {stageData.count}
+                  {stageLeads.length}
                 </span>
               </div>
               
               <div className="space-y-2">
-                {/* Aquí irían los leads de cada etapa */}
+                {stageLeads.map((lead: Lead) => (
+                  <div 
+                    key={lead.id} 
+                    className="bg-white rounded-lg p-3 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                  >
+                    <p className="font-medium">{lead.name}</p>
+                    <p className="text-sm text-gray-500">{lead.company || lead.email}</p>
+                    {lead.value ? (
+                      <p className="text-sm font-semibold text-green-600 mt-1">
+                        ${lead.value.toLocaleString()}
+                      </p>
+                    ) : null}
+                  </div>
+                ))}
               </div>
             </div>
           );
@@ -378,7 +433,7 @@ function LeadsPage() {
       {/* Modal Crear Lead */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="card w-full max-w-md">
+          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">Nuevo Lead</h2>
             <form onSubmit={handleCreateLead} className="space-y-4">
               <input
@@ -386,7 +441,7 @@ function LeadsPage() {
                 placeholder="Nombre *"
                 value={newLead.name}
                 onChange={(e) => setNewLead({ ...newLead, name: e.target.value })}
-                className="input"
+                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
                 required
               />
               <input
@@ -394,7 +449,7 @@ function LeadsPage() {
                 placeholder="Email *"
                 value={newLead.email}
                 onChange={(e) => setNewLead({ ...newLead, email: e.target.value })}
-                className="input"
+                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
                 required
               />
               <input
@@ -402,20 +457,28 @@ function LeadsPage() {
                 placeholder="Empresa"
                 value={newLead.company}
                 onChange={(e) => setNewLead({ ...newLead, company: e.target.value })}
-                className="input"
+                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
               />
               <input
                 type="number"
                 placeholder="Valor estimado ($)"
                 value={newLead.value}
                 onChange={(e) => setNewLead({ ...newLead, value: e.target.value })}
-                className="input"
+                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
               />
               <div className="flex gap-2">
-                <button type="button" onClick={() => setShowModal(false)} className="btn btn-secondary flex-1">
+                <button 
+                  type="button" 
+                  onClick={() => setShowModal(false)} 
+                  className="flex-1 px-4 py-3 bg-gray-100 rounded-lg font-medium"
+                >
                   Cancelar
                 </button>
-                <button type="submit" className="btn btn-primary flex-1" disabled={createMutation.isPending}>
+                <button 
+                  type="submit" 
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium disabled:opacity-50"
+                  disabled={createMutation.isPending}
+                >
                   {createMutation.isPending ? 'Creando...' : 'Crear'}
                 </button>
               </div>
@@ -429,28 +492,36 @@ function LeadsPage() {
 
 // Settings Page
 function SettingsPage() {
-  const { user, logout } = useAuth();
+  const { user, logout } = useNav();
+  const auth = useAuth();
+  
+  const handleLogout = () => {
+    auth.logout();
+  };
   
   return (
     <div className="p-4 md:p-8">
       <h1 className="text-2xl font-bold mb-6">Configuración</h1>
       
-      <div className="card max-w-md">
+      <div className="bg-white rounded-xl shadow-sm p-6 border max-w-md">
         <div className="space-y-4">
           <div>
             <p className="text-gray-500 text-sm">Nombre</p>
-            <p className="font-medium">{user?.name}</p>
+            <p className="font-medium">{auth.user?.name}</p>
           </div>
           <div>
             <p className="text-gray-500 text-sm">Email</p>
-            <p className="font-medium">{user?.email}</p>
+            <p className="font-medium">{auth.user?.email}</p>
           </div>
           <div>
             <p className="text-gray-500 text-sm">Rol</p>
-            <p className="font-medium capitalize">{user?.role}</p>
+            <p className="font-medium capitalize">{auth.user?.role}</p>
           </div>
           <hr />
-          <button onClick={logout} className="btn bg-red-100 text-red-600 hover:bg-red-200 w-full">
+          <button 
+            onClick={handleLogout} 
+            className="w-full px-4 py-3 bg-red-100 text-red-600 rounded-lg font-medium hover:bg-red-200"
+          >
             Cerrar Sesión
           </button>
         </div>
@@ -460,47 +531,59 @@ function SettingsPage() {
 }
 
 // Main Layout
-function Layout({ children }: { children: React.ReactNode }) {
-  const { user, logout } = useAuth();
-  const [currentPage, setCurrentPage] = useState('dashboard');
+function Layout() {
+  const auth = useAuth();
+  const { page, navigate } = useNav();
   
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b px-4 py-3 flex justify-between items-center sticky top-0 z-40">
-        <h1 className="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+        <button 
+          onClick={() => navigate('/')} 
+          className="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent"
+        >
           LeadFlow AI
-        </h1>
+        </button>
         <div className="flex items-center gap-4">
-          <span className="text-gray-600 text-sm hidden md:block">{user?.name}</span>
-          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium">
-            {user?.name?.charAt(0).toUpperCase()}
+          <span className="text-gray-600 text-sm hidden md:block">{auth.user?.name}</span>
+          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium text-sm">
+            {auth.user?.name?.charAt(0).toUpperCase()}
           </div>
         </div>
       </header>
       
       {/* Main Content */}
       <main className="flex-1">
-        {currentPage === 'dashboard' && <DashboardPage />}
-        {currentPage === 'leads' && <LeadsPage />}
-        {currentPage === 'settings' && <SettingsPage />}
+        {page === '/' && <DashboardPage />}
+        {page === '/leads' && <LeadsPage />}
+        {page === '/settings' && <SettingsPage />}
       </main>
       
       {/* Bottom Navigation (Mobile) */}
-      <nav className="bg-white border-t flex justify-around py-2 md:hidden">
-        <button onClick={() => setCurrentPage('dashboard')} className={`flex flex-col items-center p-2 ${currentPage === 'dashboard' ? 'text-blue-600' : 'text-gray-500'}`}>
+      <nav className="bg-white border-t flex justify-around py-2 sticky bottom-0">
+        <button 
+          onClick={() => navigate('/')} 
+          className={`flex flex-col items-center p-2 ${page === '/' ? 'text-blue-600' : 'text-gray-500'}`}
+        >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
           </svg>
           <span className="text-xs">Dashboard</span>
         </button>
-        <button onClick={() => setCurrentPage('leads')} className={`flex flex-col items-center p-2 ${currentPage === 'leads' ? 'text-blue-600' : 'text-gray-500'}`}>
+        <button 
+          onClick={() => navigate('/leads')} 
+          className={`flex flex-col items-center p-2 ${page === '/leads' ? 'text-blue-600' : 'text-gray-500'}`}
+        >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
           <span className="text-xs">Leads</span>
         </button>
-        <button onClick={() => setCurrentPage('settings')} className={`flex flex-col items-center p-2 ${currentPage === 'settings' ? 'text-blue-600' : 'text-gray-500'}`}>
+        <button 
+          onClick={() => navigate('/settings')} 
+          className={`flex flex-col items-center p-2 ${page === '/settings' ? 'text-blue-600' : 'text-gray-500'}`}
+        >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -520,48 +603,49 @@ const queryClient = new QueryClient({
 });
 
 export default function App() {
-  const [page, setPage] = useState(window.location.pathname);
+  const [page, setPage] = useState(window.location.pathname || '/');
   
-  useEffect(() => {
-    const handlePopState = () => setPage(window.location.pathname);
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
   const navigate = (path: string) => {
     window.history.pushState(null, '', path);
     setPage(path);
   };
 
+  useEffect(() => {
+    const handlePopState = () => setPage(window.location.pathname || '/');
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Router page={page} navigate={navigate} />
+        <NavContext.Provider value={{ page, navigate }}>
+          <Router />
+        </NavContext.Provider>
       </AuthProvider>
     </QueryClientProvider>
   );
 }
 
-function Router({ page, navigate }: { page: string; navigate: (path: string) => void }) {
-  const { user, token } = useAuth();
-  
-  // Check auth
-  useEffect(() => {
-    const publicPages = ['/login', '/register'];
-    if (!token && !publicPages.includes(page)) {
-      navigate('/login');
-    }
-    if (token && publicPages.includes(page)) {
-      navigate('/');
-    }
-  }, [token, page]);
+function Router() {
+  const { user, loading } = useAuth();
+  const { page, navigate } = useNav();
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-gray-500">Cargando...</div>
+      </div>
+    );
+  }
 
   // Public routes
-  if (page === '/login') return <LoginPage />;
-  if (page === '/register') return <RegisterPage />;
-  
+  if (!user) {
+    if (page === '/register') return <RegisterPage />;
+    return <LoginPage />;
+  }
+
   // Protected routes
-  if (!user) return <div className="min-h-screen flex items-center justify-center">Cargando...</div>;
-  
   return <Layout />;
 }
